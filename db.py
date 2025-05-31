@@ -1,24 +1,29 @@
 # db.py
-import sqlite3
+import psycopg2
 import os
-from config import DB_PATH
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement
+load_dotenv()
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    return conn
-
-# Créer le dossier "data" s'il n'existe pas
-if not os.path.exists("data"):
-    os.makedirs("data")
+    return psycopg2.connect(
+        host=os.getenv("SUPABASE_HOST"),
+        port=os.getenv("SUPABASE_PORT"),
+        dbname=os.getenv("SUPABASE_DB"),
+        user=os.getenv("SUPABASE_USER"),
+        password=os.getenv("SUPABASE_PASSWORD"),
+        sslmode="require"
+    )
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
 
     # Table des élèves
     c.execute('''
         CREATE TABLE IF NOT EXISTS eleves (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             nom TEXT,
             date_inscription TEXT,
             montant_inscription REAL,
@@ -33,7 +38,7 @@ def init_db():
     # Table des dépenses
     c.execute('''
         CREATE TABLE IF NOT EXISTS depenses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             libelle TEXT,
             montant REAL,
             date TEXT
@@ -44,17 +49,17 @@ def init_db():
     conn.close()
 
 def insert_eleve(data):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
     c.execute("""
         INSERT INTO eleves (nom, date_inscription, montant_inscription, montant_tranche1, montant_tranche2, numero, classe, sexe)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """, data)
     conn.commit()
     conn.close()
 
 def get_all_eleves():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
     c.execute("SELECT * FROM eleves ORDER BY classe ASC, nom ASC")
     rows = c.fetchall()
@@ -62,39 +67,39 @@ def get_all_eleves():
     return rows
 
 def get_eleve_by_id(eleve_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
-    c.execute("SELECT * FROM eleves WHERE id = ?", (eleve_id,))
+    c.execute("SELECT * FROM eleves WHERE id = %s", (eleve_id,))
     row = c.fetchone()
     conn.close()
     return row
 
 def update_eleve(eleve_id, data):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
     c.execute("""
-        UPDATE eleves SET nom=?, date_inscription=?, montant_inscription=?, montant_tranche1=?,
-        montant_tranche2=?, numero=?, classe=?, sexe=? WHERE id=?
+        UPDATE eleves SET nom=%s, date_inscription=%s, montant_inscription=%s, montant_tranche1=%s,
+        montant_tranche2=%s, numero=%s, classe=%s, sexe=%s WHERE id=%s
     """, (*data, eleve_id))
     conn.commit()
     conn.close()
 
 def delete_eleve(eleve_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM eleves WHERE id = ?", (eleve_id,))
+    c.execute("DELETE FROM eleves WHERE id = %s", (eleve_id,))
     conn.commit()
     conn.close()
 
 def insert_depense(data):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
-    c.execute("INSERT INTO depenses (libelle, montant, date) VALUES (?, ?, ?)", data)
+    c.execute("INSERT INTO depenses (libelle, montant, date) VALUES (%s, %s, %s)", data)
     conn.commit()
     conn.close()
 
 def get_all_depenses():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
     c.execute("SELECT * FROM depenses ORDER BY date DESC")
     rows = c.fetchall()
@@ -102,7 +107,7 @@ def get_all_depenses():
     return rows
 
 def get_total_revenu():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     c = conn.cursor()
     c.execute("SELECT SUM(montant_inscription + montant_tranche1 + montant_tranche2) FROM eleves")
     total = c.fetchone()[0]
@@ -110,7 +115,7 @@ def get_total_revenu():
     return total or 0
 
 def get_revenu_par_classe():
-    conn = sqlite3.connect("data/school_data.db")
+    conn = get_connection()
     c = conn.cursor()
     c.execute("""
         SELECT classe, SUM(montant_inscription + montant_tranche1 + montant_tranche2) as total
@@ -121,7 +126,7 @@ def get_revenu_par_classe():
     return rows
 
 def get_nb_eleves_par_classe():
-    conn = sqlite3.connect("data/school_data.db")
+    conn = get_connection()
     c = conn.cursor()
     c.execute("SELECT classe, COUNT(*) FROM eleves GROUP BY classe")
     rows = c.fetchall()

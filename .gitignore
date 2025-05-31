@@ -1,0 +1,6 @@
+# Ignorer les fichiers sensibles et les caches
+.env
+__pycache__/
+*.pyc
+*.db
+*.sqlite3
