@@ -3,10 +3,17 @@ import sqlite3
 from db import get_all_eleves, update_eleve, delete_eleve, insert_eleve
 import pandas as pd
 
-
 st.set_page_config(page_title="Liste des élèves", layout="wide")
 
 st.markdown("<h1 style='text-align: center;'>👤 Liste des élèves</h1>", unsafe_allow_html=True)
+
+# Liste complète des classes
+classes = [
+    "Petite Section", "Moyenne Section", "Grande Section",
+    "SIL", "CP", "CE1", "CE2", "CM1", "CM2",
+    "Nursery 1", "Nursery 2", "Nursery 3",
+    "CLASS 1", "CLASS 2", "CLASS 3", "CLASS 4", "CLASS 5", "CLASS 6"
+]
 
 # Formulaire d'ajout
 with st.expander("➕ Ajouter un élève"):
@@ -18,7 +25,7 @@ with st.expander("➕ Ajouter un élève"):
             date_inscription = st.date_input("Date d'inscription")
             telephone = st.text_input("Numéro de téléphone")
         with col2:
-            classe = st.selectbox("Classe", ["Petite Section","Moyenne Section","Grande Section","SIL", "CP", "CE1", "CE2", "CM1", "CM2","Nursery 1","Nursery 2","Nursery 3", "CLASS 1", "CLASS 2", "CLASS 3", "CLASS 4", "CLASS 5", "CLASS 6"])
+            classe = st.selectbox("Classe", classes)
             montant_inscription = st.number_input("Montant d'inscription", min_value=0.0)
             tranche1 = st.number_input("Montant 1ère tranche", min_value=0.0)
             tranche2 = st.number_input("Montant 2ème tranche", min_value=0.0)
@@ -57,7 +64,9 @@ else:
                     new_date = st.date_input("Date d'inscription", value=pd.to_datetime(eleve[2]))
                     new_tel = st.text_input("Téléphone", eleve[6])
                 with col2:
-                    new_classe = st.selectbox("Classe", ["6e", "5e", "4e", "3e", "2nde", "1ère", "Terminale"], index=["6e", "5e", "4e", "3e", "2nde", "1ère", "Terminale"].index(eleve[7]))
+                    # Sécurité sur la classe : utiliser la 1ère classe si inconnue
+                    selected_class = eleve[7] if eleve[7] in classes else classes[0]
+                    new_classe = st.selectbox("Classe", classes, index=classes.index(selected_class))
                     new_ins = st.number_input("Inscription", value=eleve[3])
                     new_tr1 = st.number_input("Tranche 1", value=eleve[4])
                     new_tr2 = st.number_input("Tranche 2", value=eleve[5])
@@ -79,7 +88,6 @@ else:
                     delete_eleve(eleve[0])
                     st.warning("Élève supprimé.")
                     st.experimental_rerun()
-
 
 # Fermeture automatique de la sidebar sur mobile
 st.markdown("""
