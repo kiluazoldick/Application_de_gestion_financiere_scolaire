@@ -3,3 +3,4 @@ pandas
 fpdf
 psycopg2
 python-dotenv
+supabase
