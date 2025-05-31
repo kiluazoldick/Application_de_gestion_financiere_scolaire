@@ -23,24 +23,23 @@ with st.expander("➕ Ajouter un élève"):
             date_inscription = st.date_input("Date d'inscription")
         with col2:
             classe = st.selectbox("Classe", classes)
+            montant_inscription = st.number_input("Montant d'inscription", value=10000.0, disabled=True)
             tranche1 = st.number_input("Montant 1ère tranche", min_value=0.0)
             tranche2 = st.number_input("Montant 2ème tranche", min_value=0.0)
 
         if st.form_submit_button("Ajouter l'élève"):
-            montant_inscription = 10000.0  # Fixé automatiquement
             data = (
                 nom,
                 date_inscription.strftime("%Y-%m-%d"),
-                montant_inscription,
+                10000.0,
                 tranche1,
                 tranche2,
-                "",  # Téléphone supprimé (laisser vide)
+                "",  # Téléphone supprimé
                 classe,
                 sexe
             )
             insert_eleve(data)
             st.success("✅ Élève ajouté avec succès")
-
 # Liste des élèves
 eleves = get_all_eleves()
 
