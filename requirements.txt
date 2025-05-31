@@ -1,6 +1,6 @@
 streamlit
 pandas
 fpdf
-psycopg2
+psycopg2-binary
 python-dotenv
 supabase-py
