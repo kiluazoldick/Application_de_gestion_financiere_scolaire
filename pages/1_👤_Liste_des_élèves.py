@@ -7,7 +7,7 @@ st.set_page_config(page_title="Liste des élèves", layout="wide")
 
 st.markdown("<h1 style='text-align: center;'>👤 Liste des élèves</h1>", unsafe_allow_html=True)
 
-# Liste des classes (maternelle à CM2 – FR et EN)
+# Liste des classes
 classes = [
     "Petite Section", "Moyenne Section", "Grande Section", "SIL", "CP", "CE1", "CE2", "CM1", "CM2",
     "Nursery 1", "Nursery 2", "Nursery 3", "CLASS 1", "CLASS 2", "CLASS 3", "CLASS 4", "CLASS 5", "CLASS 6"
@@ -23,23 +23,20 @@ with st.expander("➕ Ajouter un élève"):
             date_inscription = st.date_input("Date d'inscription")
         with col2:
             classe = st.selectbox("Classe", classes)
-            montant_inscription = st.number_input("Montant d'inscription", value=10000.0, disabled=True)
+            montant_inscription = st.number_input("Montant d'inscription", min_value=0.0, value=10000.0, disabled=False)
             tranche1 = st.number_input("Montant 1ère tranche", min_value=0.0)
             tranche2 = st.number_input("Montant 2ème tranche", min_value=0.0)
 
         if st.form_submit_button("Ajouter l'élève"):
             data = (
-                nom,
-                date_inscription.strftime("%Y-%m-%d"),
-                10000.0,
-                tranche1,
-                tranche2,
-                "",  # Téléphone supprimé
-                classe,
-                sexe
+                nom, date_inscription.strftime("%Y-%m-%d"),
+                montant_inscription, tranche1, tranche2,
+                "", classe, sexe  # Champ téléphone vide
             )
             insert_eleve(data)
             st.success("✅ Élève ajouté avec succès")
+            st.rerun()
+
 # Liste des élèves
 eleves = get_all_eleves()
 
@@ -50,10 +47,10 @@ else:
     for eleve in eleves:
         with st.expander(f"{eleve[1]} ({eleve[7]})"):
             st.write(f"📅 Date d'inscription : `{eleve[2]}`")
-            st.write(f"💰 Inscription : `10 000 FCFA` | Tranche 1 : `{eleve[4]} FCFA` | Tranche 2 : `{eleve[5]} FCFA`")
+            st.write(f"💰 Inscription : `{eleve[3]} FCFA` | Tranche 1 : `{eleve[4]} FCFA` | Tranche 2 : `{eleve[5]} FCFA`")
             st.write(f"👫 Sexe : `{eleve[8]}`")
 
-            total = 10000 + eleve[4] + eleve[5]
+            total = eleve[3] + eleve[4] + eleve[5]
             st.markdown(f"### 💵 Total payé : `{total} FCFA`")
 
             with st.form(f"form_modif_{eleve[0]}"):
@@ -64,6 +61,7 @@ else:
                     new_date = st.date_input("Date d'inscription", value=pd.to_datetime(eleve[2]))
                 with col2:
                     new_classe = st.selectbox("Classe", classes, index=classes.index(eleve[7]))
+                    new_ins = st.number_input("Inscription", value=eleve[3])
                     new_tr1 = st.number_input("Tranche 1", value=eleve[4])
                     new_tr2 = st.number_input("Tranche 2", value=eleve[5])
 
@@ -73,22 +71,17 @@ else:
 
                 if submit_modif:
                     update_eleve(eleve[0], (
-                        new_nom,
-                        new_date.strftime("%Y-%m-%d"),
-                        10000.0,  # montant_inscription fixé
-                        new_tr1,
-                        new_tr2,
-                        "",  # téléphone supprimé
-                        new_classe,
-                        new_sexe
+                        new_nom, new_date.strftime("%Y-%m-%d"),
+                        new_ins, new_tr1, new_tr2,
+                        "", new_classe, new_sexe  # Champ téléphone supprimé
                     ))
                     st.success("Élève modifié avec succès.")
-                    st.experimental_rerun()
+                    st.rerun()
 
                 if submit_delete:
                     delete_eleve(eleve[0])
                     st.warning("Élève supprimé.")
-                    st.experimental_rerun()
+                    st.rerun()
 
 # Fermeture automatique de la sidebar sur mobile
 st.markdown("""
